@@ -34,6 +34,11 @@ def create_driver(profile_dir: str, headless: bool = True) -> webdriver.Chrome:
     opts.add_argument('--disable-ipc-flooding-protection')
     opts.add_argument('--password-store=basic')
     opts.add_argument('--use-mock-keychain')
+    opts.add_argument('--enable-unsafe-swiftshader')
+    opts.add_argument('--use-gl=swiftshader')
+    opts.add_argument('--disable-gpu-sandbox')
+    opts.add_argument('--disable-accelerated-2d-canvas')
+    opts.add_argument('--disable-accelerated-video-decode')
     import random
     w = 1280 + random.randint(-50, 50)
     h = 720 + random.randint(-50, 50)
