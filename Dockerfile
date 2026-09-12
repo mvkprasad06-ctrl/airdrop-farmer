@@ -21,20 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libcairo2 \
     libatspi2.0-0 \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome for Testing (fixed version that we know works)
-RUN CHROME_VERSION="120.0.6099.109" \
-    && DRIVER_VERSION="120.0.6099.109" \
-    && wget -q "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chrome-linux64.zip" -O /tmp/chrome.zip \
-    && unzip /tmp/chrome.zip -d /opt/ \
-    && mv /opt/chrome-linux64 /opt/chrome \
-    && ln -sf /opt/chrome/chrome /usr/bin/google-chrome \
-    && wget -q "https://storage.googleapis.com/chrome-for-testing-public/${DRIVER_VERSION}/linux64/chromedriver-linux64.zip" -O /tmp/chromedriver.zip \
-    && unzip /tmp/chromedriver.zip -d /usr/local/bin/ \
-    && mv /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver \
-    && chmod +x /usr/local/bin/chromedriver \
-    && rm -rf /tmp/chrome.zip /tmp/chromedriver.zip /opt/chrome-linux64
+# Ensure chromedriver is in PATH
+RUN ln -sf /usr/bin/chromium-driver /usr/local/bin/chromedriver \
+    && ln -sf /usr/bin/chromium /usr/bin/google-chrome
 
 FROM base AS deps
 WORKDIR /app
