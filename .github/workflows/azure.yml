@@ -50,11 +50,14 @@ jobs:
       - name: Deploy to Container App
         uses: azure/container-apps-deploy-action@v1
         with:
+          acrName: ${{ env.REGISTRY_NAME }}
+          acrUsername: ${{ secrets.ACR_USERNAME }}
+          acrPassword: ${{ secrets.ACR_PASSWORD }}
           containerAppName: ${{ env.CONTAINER_APP }}
           resourceGroup: ${{ env.RESOURCE_GROUP }}
           imageToDeploy: ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.CONTAINER_APP }}:${{ github.sha }}
-          envVars: |
+          environmentVariables: |
             WALLET_PASSWORD=${{ secrets.WALLET_PASSWORD }}
             TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
             TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
-          args: "--wallets 10"
+            CHROME_HEADLESS=true
