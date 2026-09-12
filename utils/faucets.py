@@ -6,24 +6,24 @@ from selenium.webdriver.support import expected_conditions as EC
 
 FAUCETS = {
     'sepolia': [
-        {'url': 'https://faucet.quicknode.com/ethereum/sepolia', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
-        {'url': 'https://www.alchemy.com/faucets/ethereum-sepolia', 'selector': 'input#address', 'btn': \"button[type='submit']\"},
-        {'url': 'https://sepoliafaucet.com/', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.quicknode.com/ethereum/sepolia', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
+        {'url': 'https://www.alchemy.com/faucets/ethereum-sepolia', 'selector': 'input#address', 'btn': "button[type='submit']"},
+        {'url': 'https://sepoliafaucet.com/', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
     ],
     'arbitrum_sepolia': [
-        {'url': 'https://faucet.quicknode.com/arbitrum/sepolia', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.quicknode.com/arbitrum/sepolia', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
     ],
     'optimism_sepolia': [
-        {'url': 'https://faucet.quicknode.com/optimism/sepolia', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.quicknode.com/optimism/sepolia', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
     ],
     'base_sepolia': [
-        {'url': 'https://faucet.quicknode.com/base/sepolia', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.quicknode.com/base/sepolia', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
     ],
     'linea_sepolia': [
-        {'url': 'https://faucet.linea.build', 'selector': \"input[placeholder*='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.linea.build', 'selector': "input[placeholder*='address']", 'btn': "button[type='submit']"},
     ],
     'scroll_sepolia': [
-        {'url': 'https://faucet.scroll.io', 'selector': \"input[name='address']\", 'btn': \"button[type='submit']\"},
+        {'url': 'https://faucet.scroll.io', 'selector': "input[name='address']", 'btn': "button[type='submit']"},
     ],
 }
 

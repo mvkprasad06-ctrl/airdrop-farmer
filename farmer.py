@@ -123,7 +123,8 @@ class Farmer:
                       'linea_sepolia', 'scroll_sepolia']
             results = claim_all_faucets(driver, address, chains)
             for chain, success in results.items():
-                self.logger.info(f'  Faucet {chain}: {\"OK\" if success else \"FAIL\"}')
+                status = "OK" if success else "FAIL"
+                self.logger.info(f'  Faucet {chain}: {status}')
             
             # Run chain actions
             self.logger.info(f'  Running {action_count} chain actions...')

@@ -1,4 +1,4 @@
-﻿wallets:
+wallets:
   file: 'wallets.enc'
   count: 10
   password_env: 'WALLET_PASSWORD'
