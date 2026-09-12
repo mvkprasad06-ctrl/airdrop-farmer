@@ -1,54 +1,38 @@
-# Multi-stage Dockerfile for Airdrop Farmer
-FROM python:3.11-slim AS base
+# Use selenium's standalone Chrome image (pre-configured for headless)
+FROM selenium/standalone-chrome:120.0.6099.109
 
-# Install system dependencies
+# Switch to root to install Python dependencies
+USER root
+
+WORKDIR /app
+
+# Install Python and dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget curl gnupg2 unzip fontconfig \
-    ca-certificates \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libatspi2.0-0 \
-    chromium \
-    chromium-driver \
+    python3 \
+    python3-pip \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Ensure chromedriver is in PATH
-RUN ln -sf /usr/bin/chromium-driver /usr/local/bin/chromedriver \
-    && ln -sf /usr/bin/chromium /usr/bin/google-chrome
+# Create virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-FROM base AS deps
-WORKDIR /app
+# Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-FROM base AS final
-WORKDIR /app
-COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=deps /usr/local/bin /usr/local/bin
-RUN groupadd -r farmer && useradd -r -g farmer farmer \
-    && mkdir -p /app/logs /app/state /app/chrome_profiles \
-    && chown -R farmer:farmer /app
-COPY --chown=farmer:farmer . .
-USER farmer
+# Copy application code
+COPY --chown=seluser:seluser . .
+
+# Switch back to seluser
+USER seluser
+
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    CHROME_HEADLESS=true \
-    DISPLAY=:99
+    PYTHONDONTWRITEBYTECODE=1
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import sys; sys.exit(0)"
+
 ENTRYPOINT ["python", "farmer.py"]
 CMD ["--wallets", "10"]
