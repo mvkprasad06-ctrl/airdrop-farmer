@@ -2,7 +2,6 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 
 def create_driver(profile_dir: str, headless: bool = True) -> webdriver.Chrome:
     opts = Options()
@@ -31,7 +30,8 @@ def create_driver(profile_dir: str, headless: bool = True) -> webdriver.Chrome:
     h = 720 + random.randint(-50, 50)
     opts.add_argument(f'--window-size={w},{h}')
     
-    service = Service(ChromeDriverManager().install())
+    # Use system chromedriver (installed via apt)
+    service = Service('/usr/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=opts)
     driver.set_page_load_timeout(60)
     return driver
