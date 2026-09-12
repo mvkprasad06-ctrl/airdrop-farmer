@@ -1,4 +1,5 @@
-﻿import os
+﻿"""Pure HTTP/web3.py Airdrop Farmer - No Browser, No Selenium"""
+import os
 import sys
 import json
 import time
@@ -11,26 +12,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from utils.crypto import load_encrypted
-from utils.browser import create_driver, get_profile_dir
-from utils.faucets import claim_all_faucets
 from utils.telegram import TelegramNotifier
 from utils.monitor import collect_stats
+from utils.http_faucets import claim_all_faucets
+from utils.web3_actions import Web3Actions
 import yaml
 
-# Chain modules
-from chains.layerzero import LayerZeroFarmer
-from chains.linea import LineaFarmer
-from chains.scroll import ScrollFarmer
-from chains.hyperliquid import HyperliquidFarmer
-from chains.berachain import BerachainFarmer
-from web3 import Web3
-from eth_account import Account
-
 class Farmer:
-    def __init__(self, config, password, headless=True):
+    def __init__(self, config, password):
         self.config = config
         self.password = password
-        self.headless = headless
         self.wallets = []
         self.state = {'nonces': {}, 'last_run': {}}
         self.notifier = TelegramNotifier()
@@ -38,7 +29,7 @@ class Farmer:
         self.load_wallets()
         self.load_state()
         self.init_web3()
-        self.init_chain_farmers()
+        self.init_actions()
     
     def setup_logging(self):
         log_file = self.config['logging']['file'].format(date=datetime.now().strftime('%Y%m%d'))
@@ -77,64 +68,43 @@ class Farmer:
         self.w3 = {}
         for name, url in rpcs.items():
             try:
-                self.w3[name] = Web3(Web3.HTTPProvider(url, request_kwargs={'timeout': 30}))
-                if self.w3[name].is_connected():
-                    self.logger.info(f'RPC {name}: connected (block {self.w3[name].eth.block_number})')
+                w3 = Web3(Web3.HTTPProvider(url, request_kwargs={'timeout': 30}))
+                if w3.is_connected():
+                    self.w3[name] = w3
+                    self.logger.info(f'RPC {name}: connected (block {w3.eth.block_number})')
                 else:
                     self.logger.warning(f'RPC {name}: not connected')
             except Exception as e:
                 self.logger.error(f'RPC {name} failed: {e}')
-                self.w3[name] = None
     
-    def init_chain_farmers(self):
-        # Only init chains with working RPCs
-        self.chain_farmers = {}
-        if self.w3.get('sepolia') and self.w3.get('arbitrum_sepolia') and self.w3.get('optimism_sepolia'):
-            self.chain_farmers['layerzero'] = LayerZeroFarmer(
-                self.w3['sepolia'], self.w3['arbitrum_sepolia'], self.w3['optimism_sepolia'],
-                self.wallets[0], self.logger
-            )
-        if self.w3.get('linea_sepolia'):
-            self.chain_farmers['linea'] = LineaFarmer(self.w3['linea_sepolia'], self.wallets[0], self.logger)
-        if self.w3.get('scroll_sepolia'):
-            self.chain_farmers['scroll'] = ScrollFarmer(self.w3['scroll_sepolia'], self.wallets[0], self.logger)
-        if self.w3.get('hyperliquid_testnet'):
-            self.chain_farmers['hyperliquid'] = HyperliquidFarmer(self.w3['hyperliquid_testnet'], self.wallets[0], self.logger)
-        if self.w3.get('berachain_artio'):
-            self.chain_farmers['berachain'] = BerachainFarmer(self.w3['berachain_artio'], self.wallets[0], self.logger)
-        
-        self.logger.info(f'Initialized chain farmers: {list(self.chain_farmers.keys())}')
-    
-    def get_driver(self, wallet_id: int):
-        profile_dir = get_profile_dir(self.config['browser']['user_data_dir'], wallet_id)
-        return create_driver(profile_dir, self.headless)
+    def init_actions(self):
+        self.actions = Web3Actions(self.w3, self.config, self.logger)
     
     def run_wallet(self, wallet: dict, action_count: int):
         wallet_id = wallet['id']
         address = wallet['address']
+        private_key = wallet['private_key']
         self.logger.info(f'=== Wallet {wallet_id:02d} ({address[:8]}...) ===')
         
-        driver = None
         try:
-            driver = self.get_driver(wallet_id)
-            
-            # Claim faucets
+            # 1. Claim faucets via HTTP
             chains = ['sepolia', 'arbitrum_sepolia', 'optimism_sepolia', 'base_sepolia', 
                       'linea_sepolia', 'scroll_sepolia']
-            results = claim_all_faucets(driver, address, chains)
-            for chain, success in results.items():
-                status = "OK" if success else "FAIL"
-                self.logger.info(f'  Faucet {chain}: {status}')
+            faucet_results = claim_all_faucets(address, chains)
+            for chain, success in faucet_results.items():
+                self.logger.info(f'  Faucet {chain}: {"OK" if success else "FAIL"}')
             
-            # Run chain actions
+            # 2. Execute chain actions via web3.py
             self.logger.info(f'  Running {action_count} chain actions...')
             for i in range(action_count):
-                if not self.chain_farmers:
-                    self.logger.warning('  No chain farmers initialized')
+                if not self.w3:
+                    self.logger.warning('  No RPCs connected')
                     break
-                chain_name = random.choice(list(self.chain_farmers.keys()))
-                farmer = self.chain_farmers[chain_name]
-                farmer.run_actions(1)
+                chain_name = random.choice(list(self.w3.keys()))
+                try:
+                    self.actions.execute_random_action(chain_name, address, private_key)
+                except Exception as e:
+                    self.logger.error(f'  Action failed on {chain_name}: {e}')
                 time.sleep(random.uniform(
                     self.config['delays']['min_action_delay'],
                     self.config['delays']['max_action_delay']
@@ -146,13 +116,10 @@ class Farmer:
             self.logger.error(f'  Wallet {wallet_id:02d} error: {e}')
             self.notifier.alert('ERROR', f'Wallet {wallet_id} failed', str(e))
         finally:
-            if driver:
-                driver.quit()
-        
-        time.sleep(random.uniform(
-            self.config['delays']['min_wallet_delay'],
-            self.config['delays']['max_wallet_delay']
-        ))
+            time.sleep(random.uniform(
+                self.config['delays']['min_wallet_delay'],
+                self.config['delays']['max_wallet_delay']
+            ))
     
     def run(self, wallet_count: int = None, faucets_only: bool = False):
         wallets = self.wallets[:wallet_count] if wallet_count else self.wallets
@@ -166,7 +133,6 @@ class Farmer:
         
         self.save_state()
         
-        # Send daily summary
         stats = collect_stats()
         stats['wallets'] = len(wallets)
         self.notifier.daily_summary(stats)
@@ -179,7 +145,6 @@ def main():
     parser.add_argument('--wallets', type=int, help='Number of wallets to run')
     parser.add_argument('--test-run', action='store_true', help='Quick test with 1 wallet')
     parser.add_argument('--faucets-only', action='store_true', help='Only claim faucets')
-    parser.add_argument('--headless', action='store_true', default=True)
     args = parser.parse_args()
     
     with open('config.yaml') as f:
@@ -189,7 +154,7 @@ def main():
     if not password:
         password = input('Wallet password: ')
     
-    farmer = Farmer(config, password, headless=args.headless)
+    farmer = Farmer(config, password)
     
     if args.test_run:
         farmer.run(wallet_count=1)

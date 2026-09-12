@@ -1,4 +1,8 @@
-﻿psutil==5.9.8
+﻿# Pure HTTP/web3.py Airdrop Farmer - No Browser Required
+# Uses direct RPC calls and HTTP requests for everything
+
+# Core
+psutil==5.9.8
 web3==6.20.1
 eth-account==0.11.3
 cryptography==42.0.8
@@ -7,7 +11,4 @@ requests==2.32.3
 colorama==0.4.6
 python-dotenv==1.0.1
 tqdm==4.66.5
-undetected-chromedriver==3.5.5
-selenium==4.23.0
-selenium-wire==5.1.0
 lru-dict==1.2.0
