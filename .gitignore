@@ -1,0 +1,24 @@
+# Airdrop Farmer - Git ignore
+venv/
+venv_test/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.env
+*.log
+state/
+logs/
+chrome_profiles/
+wallets.enc
+wallets_import.csv
+*.sqlite
+*.db
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

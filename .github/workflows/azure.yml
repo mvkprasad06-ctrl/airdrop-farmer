@@ -1,63 +1,47 @@
-name: Build & Deploy to Azure Container Apps
+name: Airdrop Farmer
 
 on:
-  push:
-    branches: [main]
+  schedule:
+    - cron: '0 */4 * * *'  # Every 4 hours
   workflow_dispatch:
 
-env:
-  REGISTRY_NAME: airdropfarmeracr
-  CONTAINER_APP: airdrop-farmer
-  RESOURCE_GROUP: airdrop-farmer
-  LOCATION: eastus
-
 jobs:
-  build-and-deploy:
+  farm:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
-      contents: read
-      packages: write
+      contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Azure Container Registry
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ env.REGISTRY_NAME }}.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
-
-      - name: Build and push Docker image
+      - name: Build image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          tags: ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.CONTAINER_APP }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          load: true
+          tags: airdrop-farmer:latest
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Run farmer
+        run: |
+          docker run --rm \
+            -e WALLET_PASSWORD="${{ secrets.WALLET_PASSWORD }}" \
+            -e TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN }}" \
+            -e TELEGRAM_CHAT_ID="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -v ${{ github.workspace }}/wallets.enc:/app/wallets.enc:ro \
+            -v ${{ github.workspace }}/config.yaml:/app/config.yaml:ro \
+            airdrop-farmer:latest --wallets 10
 
-      - name: Deploy to Container App
-        uses: azure/container-apps-deploy-action@v1
-        with:
-          acrName: ${{ env.REGISTRY_NAME }}
-          acrUsername: ${{ secrets.ACR_USERNAME }}
-          acrPassword: ${{ secrets.ACR_PASSWORD }}
-          containerAppName: ${{ env.CONTAINER_APP }}
-          resourceGroup: ${{ env.RESOURCE_GROUP }}
-          imageToDeploy: ${{ env.REGISTRY_NAME }}.azurecr.io/${{ env.CONTAINER_APP }}:${{ github.sha }}
-          environmentVariables: |
-            WALLET_PASSWORD=${{ secrets.WALLET_PASSWORD }}
-            TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
-            TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
-            CHROME_HEADLESS=true
+      - name: Commit state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: update farmer state [skip ci]"
+          git push
