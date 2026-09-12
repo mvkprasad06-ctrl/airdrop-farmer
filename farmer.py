@@ -16,6 +16,7 @@ from utils.telegram import TelegramNotifier
 from utils.monitor import collect_stats
 from utils.http_faucets import claim_all_faucets
 from utils.web3_actions import Web3Actions
+from web3 import Web3
 import yaml
 
 class Farmer:
