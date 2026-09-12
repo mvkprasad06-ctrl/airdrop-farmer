@@ -1,0 +1,69 @@
+﻿wallets:
+  file: 'wallets.enc'
+  count: 10
+  password_env: 'WALLET_PASSWORD'
+
+chains:
+  - layerzero
+  - linea
+  - scroll
+  - hyperliquid
+  - berachain
+
+schedule:
+  startup_actions: 3
+  cron_actions: 5
+  faucet_interval_hours: 4
+
+delays:
+  min_action_delay: 60
+  max_action_delay: 180
+  min_wallet_delay: 120
+  max_wallet_delay: 300
+
+browser:
+  headless: true
+  disable_images: true
+  disable_gpu: true
+  no_sandbox: true
+  disable_dev_shm_usage: true
+  memory_pressure_off: true
+  max_old_space_size: 512
+  user_data_dir: '/app/chrome_profiles'
+  profile_per_wallet: true
+
+logging:
+  level: 'INFO'
+  file: 'logs/farmer_{date}.log'
+  max_size_mb: 50
+  backup_count: 7
+
+rpcs:
+  sepolia: 'https://rpc.sepolia.org'
+  arbitrum_sepolia: 'https://sepolia-rollup.arbitrum.io/rpc'
+  optimism_sepolia: 'https://sepolia.optimism.io'
+  base_sepolia: 'https://sepolia.base.org'
+  linea_sepolia: 'https://rpc.sepolia.linea.build'
+  scroll_sepolia: 'https://sepolia-rpc.scroll.io'
+  hyperliquid_testnet: 'https://rpc.hyperliquid-testnet.xyz'
+  berachain_artio: 'https://artio.rpc.berachain.com'
+
+faucets:
+  sepolia:
+    - 'https://faucet.quicknode.com/ethereum/sepolia'
+    - 'https://www.alchemy.com/faucets/ethereum-sepolia'
+    - 'https://sepoliafaucet.com/'
+  arbitrum_sepolia:
+    - 'https://faucet.quicknode.com/arbitrum/sepolia'
+  optimism_sepolia:
+    - 'https://faucet.quicknode.com/optimism/sepolia'
+  base_sepolia:
+    - 'https://faucet.quicknode.com/base/sepolia'
+  linea_sepolia:
+    - 'https://faucet.linea.build'
+  scroll_sepolia:
+    - 'https://faucet.scroll.io'
+  hyperliquid_testnet:
+    - 'https://app.hyperliquid.xyz/testnet'
+  berachain_artio:
+    - 'https://faucet.berachain.com'

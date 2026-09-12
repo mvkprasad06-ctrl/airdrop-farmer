@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  farmer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: airdrop-farmer
+    environment:
+      - WALLET_PASSWORD=${WALLET_PASSWORD}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - CHROME_HEADLESS=true
+    volumes:
+      - ./logs:/app/logs
+      - ./state:/app/state
+      - ./wallets.enc:/app/wallets.enc:ro
+      - ./config.yaml:/app/config.yaml:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
