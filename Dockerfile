@@ -22,6 +22,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
+# Create directories with proper permissions
+RUN mkdir -p /app/logs /app/state /app/chrome_profiles \
+    && chown -R seluser:seluser /app
+
 # Copy application code
 COPY --chown=seluser:seluser . .
 
